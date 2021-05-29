@@ -130,6 +130,9 @@ const DayCloudy = styled(DayCloudyIcon)`
   flex-basis: 30%;
 `;
 
+const AUTHORIZATION_KEY = process.env.REACT_APP_CWB_API_KEY;
+const LOCATION_NAME = '臺北';
+
 const App = () => {
   const [currentTheme, setCurrentTheme] = useState('light');
 
@@ -142,6 +145,34 @@ const App = () => {
     rainPossibility: 48.3,
     observationTime: '2020-12-22 22:10:00',
   });
+
+  const handleClick = () => {
+    fetch(
+      `https://opendata.cwb.gov.tw/api/v1/rest/datastore/O-A0003-001?Authorization=${AUTHORIZATION_KEY}&format=JSON&locationName=${LOCATION_NAME}`
+    )
+      .then((response) => response.json())
+      .then((data) => {
+        console.log('data', data)
+        const locationData = data.records.location[0];
+        const weatherElements = locationData.weatherElement.reduce(
+          (neededElements, item) => {
+            if (['WDSD', 'TEMP'].includes(item.elementName)) {
+              neededElements[item.elementName] = item.elementValue;
+            }
+
+            return neededElements;
+          }, {}
+        ); // => { WDSD: 1.10, TEMP: 33.20 }
+        setCurrentWeather({
+          observationTime: locationData.time.obsTime,
+          locationName: locationData.locationName,
+          temperature: weatherElements.TEMP,
+          windSpeed: weatherElements.WDSD,
+          description: '多雲時晴',
+          rainPossibility: 60,
+        });
+      });
+  };
   return (
     <ThemeProvider theme={theme[currentTheme]}>
       <Container>
@@ -160,7 +191,7 @@ const App = () => {
           <Rain>
             <RainIcon /> {currentWeather.rainPossibility}%
         </Rain>
-          <Refresh>
+          <Refresh onClick={handleClick}>
             最後觀察時間：{
               // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl
               new Intl.DateTimeFormat('zh-TW', {
