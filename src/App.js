@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import dayjs from 'dayjs';
 
 // 載入圖示
@@ -134,6 +134,7 @@ const AUTHORIZATION_KEY = process.env.REACT_APP_CWB_API_KEY;
 const LOCATION_NAME = '臺北';
 
 const App = () => {
+  console.log('invoke function component')
   const [currentTheme, setCurrentTheme] = useState('light');
 
   // 定義會使用到的資料狀態
@@ -146,7 +147,13 @@ const App = () => {
     observationTime: '2020-12-22 22:10:00',
   });
 
-  const handleClick = () => {
+  // 加入 useEffect 方法，參數是需要放入函式
+  useEffect(() => {
+    console.log('execute function in useEffect');
+    fetchCurrentWeather();
+  }, []);
+
+  const fetchCurrentWeather = () => {
     fetch(
       `https://opendata.cwb.gov.tw/api/v1/rest/datastore/O-A0003-001?Authorization=${AUTHORIZATION_KEY}&format=JSON&locationName=${LOCATION_NAME}`
     )
@@ -176,6 +183,7 @@ const App = () => {
   return (
     <ThemeProvider theme={theme[currentTheme]}>
       <Container>
+        {console.log('render')}
         <WeatherCard>
           <Location>{currentWeather.locationName}</Location>
           <Description>{currentWeather.description}</Description>
@@ -191,7 +199,7 @@ const App = () => {
           <Rain>
             <RainIcon /> {currentWeather.rainPossibility}%
         </Rain>
-          <Refresh onClick={handleClick}>
+          <Refresh onClick={fetchCurrentWeather}>
             最後觀察時間：{
               // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl
               new Intl.DateTimeFormat('zh-TW', {
