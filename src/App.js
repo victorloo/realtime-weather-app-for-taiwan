@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import dayjs from 'dayjs';
 
 // 載入圖示
 import { ReactComponent as DayCloudyIcon } from './images/day-cloudy.svg'
@@ -132,26 +133,42 @@ const DayCloudy = styled(DayCloudyIcon)`
 const App = () => {
   const [currentTheme, setCurrentTheme] = useState('light');
 
+  // 定義會使用到的資料狀態
+  const [currentWeather, setCurrentWeather] = useState({
+    locationName: '臺北市',
+    description: '多雲時晴',
+    windSpeed: 1.1,
+    temperature: 22.9,
+    rainPossibility: 48.3,
+    observationTime: '2020-12-22 22:10:00',
+  });
   return (
     <ThemeProvider theme={theme[currentTheme]}>
       <Container>
         <WeatherCard>
-          <Location theme="dark">臺北市</Location>
-          <Description>多雲時晴</Description>
+          <Location>{currentWeather.locationName}</Location>
+          <Description>{currentWeather.description}</Description>
           <CurrentWeather>
             <Temperature>
-              23 <Celsius>°C</Celsius>
+              {Math.round(currentWeather.temperature)} <Celsius>°C</Celsius>
             </Temperature>
             <DayCloudy />
           </CurrentWeather>
           <AirFlow>
-            <AirFlowIcon /> 23 m/h
+            <AirFlowIcon /> {currentWeather.windSpeed} m/h
         </AirFlow>
           <Rain>
-            <RainIcon /> 48%
+            <RainIcon /> {currentWeather.rainPossibility}%
         </Rain>
           <Refresh>
-            最後觀察時間：上午 12:03 <RefreshIcon />
+            最後觀察時間：{
+              // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl
+              new Intl.DateTimeFormat('zh-TW', {
+                hour: 'numeric',
+                minute: 'numeric',
+              }).format(dayjs(currentWeather.observationTime))}
+            {' '} {/* 最後在頁面上元件與元件間保留空格 */}
+            <RefreshIcon />
           </Refresh>
         </WeatherCard>
       </Container>
