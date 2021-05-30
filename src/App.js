@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import dayjs from 'dayjs';
+import { getMoment } from './utils/helpers';
 
 // 載入圖示
 import { ReactComponent as AirFlowIcon } from './images/airFlow.svg';
@@ -217,6 +218,12 @@ const App = () => {
     isLoading: true,
   });
 
+  const moment = useMemo(() => getMoment(LOCATION_NAME_FORECAST), []);
+
+  useEffect(() => {
+    setCurrentTheme(moment === 'day' ? 'light' : 'dark');
+  }, [moment]);
+
   const fetchData = useCallback(async () => {
     setWeatherElement((prevState) => ({
       ...prevState,
@@ -267,7 +274,7 @@ const App = () => {
             <Temperature>
               {Math.round(temperature)} <Celsius>°C</Celsius>
             </Temperature>
-            <WeatherIcon weatherCode={weatherCode} moment="night" />
+            <WeatherIcon weatherCode={weatherCode} moment={moment} />
           </CurrentWeather>
           <AirFlow>
             <AirFlowIcon /> {windSpeed} m/h
