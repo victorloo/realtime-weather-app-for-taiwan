@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import dayjs from 'dayjs';
 
 // 載入圖示
-import { ReactComponent as DayCloudyIcon } from './images/day-cloudy.svg'
-import { ReactComponent as AirFlowIcon } from './images/airFlow.svg'
-import { ReactComponent as RainIcon } from './images/rain.svg'
-import { ReactComponent as RefreshIcon } from './images/refresh.svg'
+import { ReactComponent as DayCloudyIcon } from './images/day-cloudy.svg';
+import { ReactComponent as AirFlowIcon } from './images/airFlow.svg';
+import { ReactComponent as RainIcon } from './images/rain.svg';
+import { ReactComponent as RefreshIcon } from './images/refresh.svg';
 import { ReactComponent as LoadingIcon } from './images/loading.svg';
 
 // Step1: 載入 emotion 的 styled 套件
@@ -146,6 +146,64 @@ const AUTHORIZATION_KEY = process.env.REACT_APP_CWB_API_KEY;
 const LOCATION_NAME = '臺北';
 const LOCATION_NAME_FORECAST = '臺北市';
 
+const fetchCurrentWeather = () => {
+  return fetch(
+    `https://opendata.cwb.gov.tw/api/v1/rest/datastore/O-A0003-001?Authorization=${AUTHORIZATION_KEY}&locationName=${LOCATION_NAME}`
+  )
+    .then((response) => response.json())
+    .then((data) => {
+      console.log('data', data)
+      const locationData = data.records.location[0];
+      const weatherElements = locationData.weatherElement.reduce(
+        (neededElements, item) => {
+          if (['WDSD', 'TEMP'].includes(item.elementName)) {
+            neededElements[item.elementName] = item.elementValue;
+          }
+          return neededElements;
+        }, {}
+      ); // => { WDSD: 1.10, TEMP: 33.20 }
+
+      return {
+        observationTime: locationData.time.obsTime,
+        locationName: locationData.locationName,
+        temperature: weatherElements.TEMP,
+        windSpeed: weatherElements.WDSD,
+      };
+    });
+};
+
+const fetchWeatherForecast = () => {
+  return fetch(
+    `https://opendata.cwb.gov.tw/api/v1/rest/datastore/F-C0032-001?Authorization=${AUTHORIZATION_KEY}&locationName=${LOCATION_NAME_FORECAST}`
+  )
+    .then((response) => response.json())
+    .then((data) => {
+      // 取出某縣市的預報資料
+      console.log('data', data)
+      const locationData = data.records.location[0];
+
+      const weatherElements = locationData.weatherElement.reduce(
+        (neededElements, item) => {
+          // 只保留需要用到的「天氣現象」、「降雨機率」和「舒適度」
+          if (['Wx', 'PoP', 'CI'].includes(item.elementName)) {
+            // 這支 API 會回傳未來 36 小時的資料，這裡只需要取出最近 12 小時的資料，因此使用 item.time[0]
+            neededElements[item.elementName] = item.time[0].parameter;
+          }
+
+          return neededElements;
+        },
+        {}
+      );
+
+      return {
+        description: weatherElements.Wx.parameterName,
+        weatherCode: weatherElements.Wx.parameterValue,
+        rainPossibility: weatherElements.PoP.parameterName,
+        comfortability: weatherElements.CI.parameterName,
+      };
+    });
+};
+
 const App = () => {
   console.log('invoke function component')
   const [currentTheme, setCurrentTheme] = useState('light');
@@ -158,7 +216,7 @@ const App = () => {
     temperature: 0,
     rainPossibility: 0,
     observationTime: new Date(),
-    comfortablility: '',
+    comfortability: '',
     weatherCode: 0,
     isLoading: true,
   });
@@ -166,78 +224,26 @@ const App = () => {
   // 加入 useEffect 方法，參數是需要放入函式
   useEffect(() => {
     console.log('execute function in useEffect');
-    fetchCurrentWeather();
-    fetchWeatherForecast();
+    const fetchData = async () => {
+      setWeatherElement((prevState) => ({
+        ...prevState,
+        isLoading: true,
+      }));
+
+      const [currentWeather, weatherForecast] = await Promise.all([
+        fetchCurrentWeather(),
+        fetchWeatherForecast(),
+      ]);
+
+      setWeatherElement({
+        ...currentWeather,
+        ...weatherForecast,
+        isLoading: false,
+      });
+    };
+
+    fetchData();
   }, []);
-
-  const fetchCurrentWeather = () => {
-    setWeatherElement((prevState) => ({
-      ...prevState,
-      isLoading: true,
-    }));
-
-    fetch(
-      `https://opendata.cwb.gov.tw/api/v1/rest/datastore/O-A0003-001?Authorization=${AUTHORIZATION_KEY}&format=JSON&locationName=${LOCATION_NAME}`
-    )
-      .then((response) => response.json())
-      .then((data) => {
-        console.log('data', data)
-        const locationData = data.records.location[0];
-        const weatherElements = locationData.weatherElement.reduce(
-          (neededElements, item) => {
-            if (['WDSD', 'TEMP'].includes(item.elementName)) {
-              neededElements[item.elementName] = item.elementValue;
-            }
-
-            return neededElements;
-          }, {}
-        ); // => { WDSD: 1.10, TEMP: 33.20 }
-        setWeatherElement((prevState) => ({
-          ...prevState,
-          observationTime: locationData.time.obsTime,
-          locationName: locationData.locationName,
-          temperature: weatherElements.TEMP,
-          windSpeed: weatherElements.WDSD,
-          // description: '多雲時晴',
-          // rainPossibility: 60,
-          isLoading: false,
-        }));
-      });
-  };
-
-  const fetchWeatherForecast = () => {
-    fetch(
-      `https://opendata.cwb.gov.tw/api/v1/rest/datastore/F-C0032-001?Authorization=${AUTHORIZATION_KEY}&format=JSON&locationName=${LOCATION_NAME_FORECAST}`
-    )
-      .then((response) => response.json())
-      .then((data) => {
-        // 取出某縣市的預報資料
-        console.log('data', data)
-        const locationData = data.records.location[0];
-
-        const weatherElements = locationData.weatherElement.reduce(
-          (neededElements, item) => {
-            // 只保留需要用到的「天氣現象」、「降雨機率」和「舒適度」
-            if (['Wx', 'PoP', 'CI'].includes(item.elementName)) {
-              // 這支 API 會回傳未來 36 小時的資料，這裡只需要取出最近 12 小時的資料，因此使用 item.time[0]
-              neededElements[item.elementName] = item.time[0].parameter;
-            }
-
-            return neededElements;
-          },
-          {}
-        );
-
-        setWeatherElement((prevState) => ({
-          ...prevState,
-          description: weatherElements.Wx.parameterName,
-          weatherCode: weatherElements.Wx.parameterValue,
-          rainPossibility: weatherElements.PoP.parameterName,
-          comfortablility: weatherElements.CI.parameterName,
-        }));
-      });
-
-  };
 
   const {
     observationTime,
@@ -247,7 +253,7 @@ const App = () => {
     temperature,
     rainPossibility,
     isLoading,
-    comfortablility,
+    comfortability,
   } = weatherElement;
 
   return (
@@ -257,7 +263,7 @@ const App = () => {
         <WeatherCard>
           <Location>{locationName}</Location>
           <Description>
-            {description} {comfortablility}
+            {description} {comfortability}
           </Description>
           <CurrentWeather>
             <Temperature>
@@ -267,10 +273,10 @@ const App = () => {
           </CurrentWeather>
           <AirFlow>
             <AirFlowIcon /> {windSpeed} m/h
-        </AirFlow>
+          </AirFlow>
           <Rain>
             <RainIcon /> {rainPossibility}%
-        </Rain>
+          </Rain>
           <Refresh
             onClick={() => {
               fetchCurrentWeather();
@@ -278,7 +284,7 @@ const App = () => {
             }}
             isLoading={isLoading}
           >
-            最後觀察時間：{
+            最後觀測時間：{
               // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl
               new Intl.DateTimeFormat('zh-TW', {
                 hour: 'numeric',
