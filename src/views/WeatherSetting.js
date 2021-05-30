@@ -91,15 +91,17 @@ const Save = styled.button`
   }
 `;
 
-const WeatherSetting = ({ handleCurrentPageChange }) => {
-  const [locationName, setLocationName] = useState('臺北市');
+const WeatherSetting = ({ cityName, handleCurrentCityChange, handleCurrentPageChange }) => {
+  const [locationName, setLocationName] = useState(cityName);
 
   const handleChange = (e) => {
     setLocationName(e.target.value);
   };
 
   const handleSave = () => {
-    console.log('locationName', locationName);
+    console.log(`儲存的地區資訊為：${locationName}`);
+    handleCurrentCityChange(locationName);
+    handleCurrentPageChange('WeatherCard');
   };
 
   return (

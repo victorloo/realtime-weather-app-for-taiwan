@@ -3,10 +3,10 @@ import styled from '@emotion/styled';
 import dayjs from 'dayjs';
 import WeatherIcon from './../components/WeatherIcon.js';
 import { ReactComponent as AirFlowIcon } from './../images/airFlow.svg';
+import { ReactComponent as CogIcon } from './../images/cog.svg';
+import { ReactComponent as LoadingIcon } from './../images/loading.svg';
 import { ReactComponent as RainIcon } from './../images/rain.svg';
 import { ReactComponent as RefreshIcon } from './../images/refresh.svg';
-import { ReactComponent as LoadingIcon } from './../images/loading.svg';
-import { ReactComponent as CogIcon } from './../images/cog.svg';
 
 const WeatherCardWrapper = styled.div`
   position: relative;
@@ -114,10 +114,15 @@ const Cog = styled(CogIcon)`
   cursor: pointer;
 `;
 
-const WeatherCard = ({ weatherElement, moment, fetchData, handleCurrentPageChange }) => {
+const WeatherCard = ({
+  weatherElement,
+  moment,
+  fetchData,
+  handleCurrentPageChange,
+  cityName,
+}) => {
   const {
     observationTime,
-    locationName,
     temperature,
     windSpeed,
     description,
@@ -130,7 +135,7 @@ const WeatherCard = ({ weatherElement, moment, fetchData, handleCurrentPageChang
   return (
     <WeatherCardWrapper>
       <Cog onClick={() => handleCurrentPageChange('WeatherSetting')} />
-      <Location>{locationName}</Location>
+      <Location>{cityName}</Location>
       <Description>
         {description} {comfortability}
       </Description>

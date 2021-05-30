@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import styled from '@emotion/styled';
 import { ThemeProvider } from '@emotion/react';
 import WeatherCard from './views/WeatherCard';
 import WeatherSetting from './views/WeatherSetting';
-import { getMoment } from './utils/helpers';
+import { findLocation, getMoment } from './utils/helpers';
 import useWeatherAPI from './hooks/useWeatherAPI';
 
 const theme = {
@@ -37,15 +37,9 @@ const Container = styled.div`
 `;
 
 const AUTHORIZATION_KEY = process.env.REACT_APP_CWB_API_KEY;
-const LOCATION_NAME = '臺北';
-const LOCATION_NAME_FORECAST = '臺北市';
 
 const App = () => {
-  const [weatherElement, fetchData] = useWeatherAPI({
-    locationName: LOCATION_NAME,
-    cityName: LOCATION_NAME_FORECAST,
-    authorizationKey: AUTHORIZATION_KEY,
-  });
+  const [currentCity, setCurrentCity] = useState('臺北市');
   const [currentPage, setCurrentPage] = useState('WeatherCard');
   const [currentTheme, setCurrentTheme] = useState('light');
 
@@ -53,7 +47,23 @@ const App = () => {
     setCurrentPage(currentPage);
   };
 
-  const moment = useMemo(() => getMoment(LOCATION_NAME_FORECAST), []);
+  const handleCurrentCityChange = (currentCity) => {
+    setCurrentCity(currentCity);
+  };
+
+  const currentLocation = useMemo(() => findLocation(currentCity), [
+    currentCity,
+  ]);
+
+  const { cityName, locationName, sunriseCityName } = currentLocation;
+
+  const moment = useMemo(() => getMoment(sunriseCityName), [sunriseCityName]);
+
+  const [weatherElement, fetchData] = useWeatherAPI({
+    locationName,
+    cityName,
+    authorizationKey: AUTHORIZATION_KEY,
+  });
 
   useEffect(() => {
     setCurrentTheme(moment === 'day' ? 'light' : 'dark');
@@ -64,6 +74,7 @@ const App = () => {
       <Container>
         {currentPage === 'WeatherCard' && (
           <WeatherCard
+            cityName={cityName}
             weatherElement={weatherElement}
             moment={moment}
             fetchData={fetchData}
@@ -72,7 +83,11 @@ const App = () => {
         )}
 
         {currentPage === 'WeatherSetting' && (
-          <WeatherSetting handleCurrentPageChange={handleCurrentPageChange} />
+          <WeatherSetting
+            cityName={cityName}
+            handleCurrentCityChange={handleCurrentCityChange}
+            handleCurrentPageChange={handleCurrentPageChange}
+          />
         )}
       </Container>
     </ThemeProvider>
