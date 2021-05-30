@@ -39,7 +39,8 @@ const Container = styled.div`
 const AUTHORIZATION_KEY = process.env.REACT_APP_CWB_API_KEY;
 
 const App = () => {
-  const [currentCity, setCurrentCity] = useState('臺北市');
+  const storageCity = localStorage.getItem('cityName') || '臺北市';
+  const [currentCity, setCurrentCity] = useState(storageCity);
   const [currentPage, setCurrentPage] = useState('WeatherCard');
   const [currentTheme, setCurrentTheme] = useState('light');
 
