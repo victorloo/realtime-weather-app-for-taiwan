@@ -1,5 +1,6 @@
 {
   "name": "realtime-weather-app",
+  "homepage": "https://victorloo.github.io/realtime-weather-app-for-taiwan",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -10,6 +11,7 @@
     "@testing-library/react": "^11.1.0",
     "@testing-library/user-event": "^12.1.10",
     "dayjs": "^1.10.5",
+    "gh-pages": "^3.2.0",
     "normalize.css": "^8.0.1",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
@@ -21,7 +23,9 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "build:sunrise-sunset": "node ./src/utils/filter-sunrise-and-sunset"
+    "build:sunrise-sunset": "node ./src/utils/filter-sunrise-and-sunset",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
   },
   "eslintConfig": {
     "extends": [
