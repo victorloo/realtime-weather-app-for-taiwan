@@ -2,11 +2,11 @@ import React, { useState, useEffect, useCallback } from 'react';
 import dayjs from 'dayjs';
 
 // 載入圖示
-import { ReactComponent as DayCloudyIcon } from './images/day-cloudy.svg';
 import { ReactComponent as AirFlowIcon } from './images/airFlow.svg';
 import { ReactComponent as RainIcon } from './images/rain.svg';
 import { ReactComponent as RefreshIcon } from './images/refresh.svg';
 import { ReactComponent as LoadingIcon } from './images/loading.svg';
+import WeatherIcon from './components/WeatherIcon';
 
 // Step1: 載入 emotion 的 styled 套件
 import styled from '@emotion/styled';
@@ -138,10 +138,6 @@ const Refresh = styled.div`
   }
 `;
 
-const DayCloudy = styled(DayCloudyIcon)`
-  flex-basis: 30%;
-`;
-
 const AUTHORIZATION_KEY = process.env.REACT_APP_CWB_API_KEY;
 const LOCATION_NAME = '臺北';
 const LOCATION_NAME_FORECAST = '臺北市';
@@ -270,7 +266,7 @@ const App = () => {
             <Temperature>
               {Math.round(temperature)} <Celsius>°C</Celsius>
             </Temperature>
-            <DayCloudy />
+            <WeatherIcon />
           </CurrentWeather>
           <AirFlow>
             <AirFlowIcon /> {windSpeed} m/h
