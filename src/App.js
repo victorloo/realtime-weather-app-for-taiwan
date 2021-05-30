@@ -251,6 +251,7 @@ const App = () => {
     rainPossibility,
     isLoading,
     comfortability,
+    weatherCode,
   } = weatherElement;
 
   return (
@@ -266,7 +267,7 @@ const App = () => {
             <Temperature>
               {Math.round(temperature)} <Celsius>°C</Celsius>
             </Temperature>
-            <WeatherIcon />
+            <WeatherIcon weatherCode={weatherCode} moment="night" />
           </CurrentWeather>
           <AirFlow>
             <AirFlowIcon /> {windSpeed} m/h
