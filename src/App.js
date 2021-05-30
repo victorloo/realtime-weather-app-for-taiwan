@@ -144,19 +144,22 @@ const DayCloudy = styled(DayCloudyIcon)`
 
 const AUTHORIZATION_KEY = process.env.REACT_APP_CWB_API_KEY;
 const LOCATION_NAME = '臺北';
+const LOCATION_NAME_FORECAST = '臺北市';
 
 const App = () => {
   console.log('invoke function component')
   const [currentTheme, setCurrentTheme] = useState('light');
 
   // 定義會使用到的資料狀態
-  const [currentWeather, setCurrentWeather] = useState({
-    locationName: '臺北市',
-    description: '多雲時晴',
-    windSpeed: 1.1,
-    temperature: 22.9,
-    rainPossibility: 48.3,
-    observationTime: '2020-12-22 22:10:00',
+  const [weatherElement, setWeatherElement] = useState({
+    locationName: '',
+    description: '',
+    windSpeed: 0,
+    temperature: 0,
+    rainPossibility: 0,
+    observationTime: new Date(),
+    comfortablility: '',
+    weatherCode: 0,
     isLoading: true,
   });
 
@@ -164,10 +167,11 @@ const App = () => {
   useEffect(() => {
     console.log('execute function in useEffect');
     fetchCurrentWeather();
+    fetchWeatherForecast();
   }, []);
 
   const fetchCurrentWeather = () => {
-    setCurrentWeather((prevState) => ({
+    setWeatherElement((prevState) => ({
       ...prevState,
       isLoading: true,
     }));
@@ -188,16 +192,51 @@ const App = () => {
             return neededElements;
           }, {}
         ); // => { WDSD: 1.10, TEMP: 33.20 }
-        setCurrentWeather({
+        setWeatherElement((prevState) => ({
+          ...prevState,
           observationTime: locationData.time.obsTime,
           locationName: locationData.locationName,
           temperature: weatherElements.TEMP,
           windSpeed: weatherElements.WDSD,
-          description: '多雲時晴',
-          rainPossibility: 60,
+          // description: '多雲時晴',
+          // rainPossibility: 60,
           isLoading: false,
-        });
+        }));
       });
+  };
+
+  const fetchWeatherForecast = () => {
+    fetch(
+      `https://opendata.cwb.gov.tw/api/v1/rest/datastore/F-C0032-001?Authorization=${AUTHORIZATION_KEY}&format=JSON&locationName=${LOCATION_NAME_FORECAST}`
+    )
+      .then((response) => response.json())
+      .then((data) => {
+        // 取出某縣市的預報資料
+        console.log('data', data)
+        const locationData = data.records.location[0];
+
+        const weatherElements = locationData.weatherElement.reduce(
+          (neededElements, item) => {
+            // 只保留需要用到的「天氣現象」、「降雨機率」和「舒適度」
+            if (['Wx', 'PoP', 'CI'].includes(item.elementName)) {
+              // 這支 API 會回傳未來 36 小時的資料，這裡只需要取出最近 12 小時的資料，因此使用 item.time[0]
+              neededElements[item.elementName] = item.time[0].parameter;
+            }
+
+            return neededElements;
+          },
+          {}
+        );
+
+        setWeatherElement((prevState) => ({
+          ...prevState,
+          description: weatherElements.Wx.parameterName,
+          weatherCode: weatherElements.Wx.parameterValue,
+          rainPossibility: weatherElements.PoP.parameterName,
+          comfortablility: weatherElements.CI.parameterName,
+        }));
+      });
+
   };
 
   const {
@@ -208,7 +247,8 @@ const App = () => {
     temperature,
     rainPossibility,
     isLoading,
-  } = currentWeather;
+    comfortablility,
+  } = weatherElement;
 
   return (
     <ThemeProvider theme={theme[currentTheme]}>
@@ -216,7 +256,9 @@ const App = () => {
         {console.log('render, isLoading: ', isLoading)}
         <WeatherCard>
           <Location>{locationName}</Location>
-          <Description>{description}</Description>
+          <Description>
+            {description} {comfortablility}
+          </Description>
           <CurrentWeather>
             <Temperature>
               {Math.round(temperature)} <Celsius>°C</Celsius>
@@ -230,7 +272,10 @@ const App = () => {
             <RainIcon /> {rainPossibility}%
         </Rain>
           <Refresh
-            onClick={fetchCurrentWeather}
+            onClick={() => {
+              fetchCurrentWeather();
+              fetchWeatherForecast();
+            }}
             isLoading={isLoading}
           >
             最後觀察時間：{
