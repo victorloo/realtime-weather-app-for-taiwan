@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import dayjs from 'dayjs';
 
 // 載入圖示
@@ -221,29 +221,30 @@ const App = () => {
     isLoading: true,
   });
 
+  const fetchData = useCallback(async () => {
+    setWeatherElement((prevState) => ({
+      ...prevState,
+      isLoading: true,
+    }));
+
+    const [currentWeather, weatherForecast] = await Promise.all([
+      fetchCurrentWeather(),
+      fetchWeatherForecast(),
+    ]);
+
+    setWeatherElement({
+      ...currentWeather,
+      ...weatherForecast,
+      isLoading: false,
+    });
+  }, []);
+
   // 加入 useEffect 方法，參數是需要放入函式
   useEffect(() => {
     console.log('execute function in useEffect');
-    const fetchData = async () => {
-      setWeatherElement((prevState) => ({
-        ...prevState,
-        isLoading: true,
-      }));
-
-      const [currentWeather, weatherForecast] = await Promise.all([
-        fetchCurrentWeather(),
-        fetchWeatherForecast(),
-      ]);
-
-      setWeatherElement({
-        ...currentWeather,
-        ...weatherForecast,
-        isLoading: false,
-      });
-    };
 
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   const {
     observationTime,
@@ -278,10 +279,7 @@ const App = () => {
             <RainIcon /> {rainPossibility}%
           </Rain>
           <Refresh
-            onClick={() => {
-              fetchCurrentWeather();
-              fetchWeatherForecast();
-            }}
+            onClick={fetchData}
             isLoading={isLoading}
           >
             最後觀測時間：{
